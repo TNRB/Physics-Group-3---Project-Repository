@@ -1,49 +1,58 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import *
+from tkinter import ttk, messagebox, filedialog
+import csv
 
 class EnergyCalculator:
     def __init__(self, root):
         self.root = root
         self.root.title("Enhanced Energy Cost Calculator")
-        self.root.geometry("550x370")
+        self.root.geometry("720x520")
+        self.root.config(background="#2f373e")
         self.root.resizable(False, False)
 
         menubar = tk.Menu(self.root)
-        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu = tk.Menu(menubar, tearoff=0,background="#ADC2D1")
+        file_menu.add_command(label="Export CSV", command=self.export_csv)
         file_menu.add_command(label="Clear All", command=self.clear_all)
         file_menu.add_command(label="Delete Selected", command=self.delete_selected)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.root.quit)
-        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Exit", command=self.root.quit,background="#ADC2D1")
+        menubar.add_cascade(label="File", menu=file_menu,background="#ADC2D1")
 
-        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu = tk.Menu(menubar, tearoff=0,background="#ADC2D1")
         help_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "Energy Cost Calculator\nVersion 1.0"))
         menubar.add_cascade(label="Help", menu=help_menu)
 
         self.root.config(menu=menubar)
 
-        ttk.Label(root, text="ENERGY COST CALCULATOR", font=("Arial", 16, "bold")).pack(pady=10)
+        tk.Label(root, text="ENERGY COST CALCULATOR", font=("Arial", 16, "bold"),background="#2f373e",foreground='#72C24C').pack(pady=10)
 
-        input_frame = ttk.Frame(root)
+        input_frame = tk.Frame(root,background="#2f373e")
         input_frame.pack(pady=5)
 
-        ttk.Label(input_frame, text="Appliance Name:").grid(row=0, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Power (Watts):").grid(row=1, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Hours/Day:").grid(row=2, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Rate (₱/kWh):").grid(row=3, column=0, padx=5, pady=5)
+        ttk.Label(input_frame, text="Appliance Name:",background="#2f373e",foreground='#72C24C').grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(input_frame, text="Power (Watts):",background="#2f373e",foreground='#72C24C').grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(input_frame, text="Hours/Day:",background="#2f373e",foreground='#72C24C').grid(row=2, column=0, padx=5, pady=5)
+        ttk.Label(input_frame, text="Rate (₱/kWh):",background="#2f373e",foreground='#72C24C').grid(row=3, column=0, padx=5, pady=5)
 
-        self.entry_name = ttk.Entry(input_frame, width=25)
-        self.entry_watts = ttk.Entry(input_frame)
-        self.entry_hours = ttk.Entry(input_frame)
-        self.entry_rate = ttk.Entry(input_frame)
+        self.entry_name = tk.Entry(input_frame, width=25,background="#ADC2D1")
+        self.entry_watts = tk.Entry(input_frame,background="#ADC2D1")
+        self.entry_hours = tk.Entry(input_frame,background="#ADC2D1")
+        self.entry_rate = tk.Entry(input_frame,background="#ADC2D1")
 
         self.entry_name.grid(row=0, column=1)
         self.entry_watts.grid(row=1, column=1)
         self.entry_hours.grid(row=2, column=1)
         self.entry_rate.grid(row=3, column=1)
 
-        ttk.Button(input_frame, text="Add Appliance", command=self.add_appliance).grid(row=4, column=0, columnspan=2, pady=10)
+        tk.Button(input_frame, text="Add Appliance", command=self.add_appliance,background="#ADC2D1",foreground="#356D1B").grid(row=4, column=0, columnspan=2, pady=10)
 
+        Table = ttk.Style()
+        Table.theme_use("clam")
+        Table.configure('Treeview', background="#ADC2D1", fieldbackground="#ADC2D1")
+        Table.configure('Treeview.Heading', background="#7B97AC",foreground='#FCDEFF')
+        
         self.tree = ttk.Treeview(root, columns=("name","watts","hours","rate","daily","monthly"), show="headings", height=8)
         self.tree.pack(pady=5)
 
@@ -61,10 +70,10 @@ class EnergyCalculator:
         self.tree.column("daily", width=110)
         self.tree.column("monthly", width=120)
 
-        ttk.Button(root, text="Delete Selected", command=self.delete_selected).pack(pady=6)
+        tk.Button(root, text="Delete Selected", command=self.delete_selected,background="#ADC2D1",foreground="#356D1B").pack(pady=6)
 
-        self.total_daily_label = ttk.Label(root, text="Total Daily Cost: ₱0.00", font=("Arial", 11, "bold"))
-        self.total_monthly_label = ttk.Label(root, text="Total Monthly Cost: ₱0.00", font=("Arial", 11, "bold"))
+        self.total_daily_label = ttk.Label(root, text="Total Daily Cost: ₱0.00", font=("Arial", 11, "bold"),background="#2f373e",foreground='#FCDEFF')
+        self.total_monthly_label = ttk.Label(root, text="Total Monthly Cost: ₱0.00", font=("Arial", 11, "bold"),background="#2f373e",foreground='#5FCCFA')
 
         self.total_daily_label.pack()
         self.total_monthly_label.pack()
@@ -118,6 +127,21 @@ class EnergyCalculator:
             self.tree.move(k, '', i)
         self.tree.heading(col, command=lambda: self.sort_by(col, not descending))
 
+    def export_csv(self):
+        path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+        if not path:
+            return
+        rows = []
+        for item in self.tree.get_children():
+            rows.append(self.tree.item(item, 'values'))
+        try:
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(["Appliance","Watts","Hours/Day","Rate(₱/kWh)","Daily(₱)","Monthly(₱)"])
+                writer.writerows(rows)
+            messagebox.showinfo("Exported", f"Exported {len(rows)} rows to CSV")
+        except Exception as e:
+            messagebox.showerror("Export Failed", str(e))
 
     def clear_all(self):
         if not messagebox.askyesno("Confirm", "Clear all appliances?"):
@@ -139,5 +163,7 @@ class EnergyCalculator:
 
 
 root = tk.Tk()
+icon = PhotoImage(file='logo.png')
+root.iconphoto(True,icon)
 EnergyCalculator(root)
 root.mainloop()
