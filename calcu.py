@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
-import csv
+from tkinter import ttk, messagebox
 
 class EnergyCalculator:
     def __init__(self, root):
@@ -11,7 +10,6 @@ class EnergyCalculator:
 
         menubar = tk.Menu(self.root)
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Export CSV", command=self.export_csv)
         file_menu.add_command(label="Clear All", command=self.clear_all)
         file_menu.add_command(label="Delete Selected", command=self.delete_selected)
         file_menu.add_separator()
@@ -120,21 +118,6 @@ class EnergyCalculator:
             self.tree.move(k, '', i)
         self.tree.heading(col, command=lambda: self.sort_by(col, not descending))
 
-    def export_csv(self):
-        path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
-        if not path:
-            return
-        rows = []
-        for item in self.tree.get_children():
-            rows.append(self.tree.item(item, 'values'))
-        try:
-            with open(path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(["Appliance","Watts","Hours/Day","Rate(₱/kWh)","Daily(₱)","Monthly(₱)"])
-                writer.writerows(rows)
-            messagebox.showinfo("Exported", f"Exported {len(rows)} rows to CSV")
-        except Exception as e:
-            messagebox.showerror("Export Failed", str(e))
 
     def clear_all(self):
         if not messagebox.askyesno("Confirm", "Clear all appliances?"):
