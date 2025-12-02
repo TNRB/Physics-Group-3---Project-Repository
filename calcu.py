@@ -9,7 +9,6 @@ class EnergyCalculator:
         self.root = root
         self.root.title("Energy Cost Calculator")
 
-        # Increased window size
         self.root.geometry("1200x700")
         self.root.config(background="#2f373e")
         self.root.resizable(False, False)
@@ -17,7 +16,7 @@ class EnergyCalculator:
         self.image_cache = {}
         self.selected_image_path = None
 
-        # Menu
+        # Menu Bar
         menubar = tk.Menu(self.root)
         file_menu = tk.Menu(menubar, tearoff=0, background="#ADC2D1")
         file_menu.add_command(label="Export CSV", command=self.export_csv)
@@ -25,11 +24,13 @@ class EnergyCalculator:
         file_menu.add_command(label="Delete Selected", command=self.delete_selected)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
+
         menubar.add_cascade(label="File", menu=file_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0, background="#ADC2D1")
-        help_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "Energy Cost Calculator\nVersion 1.0"))
+        help_menu.add_command(label="About", command=lambda: messagebox.showinfo("About", "Energy Cost Calculator v1.0"))
         menubar.add_cascade(label="Help", menu=help_menu)
+
         self.root.config(menu=menubar)
 
         # Title
@@ -40,10 +41,10 @@ class EnergyCalculator:
         input_frame = tk.Frame(root, background="#2f373e")
         input_frame.pack(pady=5)
 
-        ttk.Label(input_frame, text="Appliance Name:", background="#2f373e", foreground='#72C24C').grid(row=0, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Power (Watts):", background="#2f373e", foreground='#72C24C').grid(row=1, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Hours/Day:", background="#2f373e", foreground='#72C24C').grid(row=2, column=0, padx=5, pady=5)
-        ttk.Label(input_frame, text="Rate (₱/kWh):", background="#2f373e", foreground='#72C24C').grid(row=3, column=0, padx=5, pady=5)
+        ttk.Label(input_frame, text="Appliance Name:", background="#2f373e", foreground='#72C24C').grid(row=0, column=0, pady=5)
+        ttk.Label(input_frame, text="Power (Watts):", background="#2f373e", foreground='#72C24C').grid(row=1, column=0, pady=5)
+        ttk.Label(input_frame, text="Hours/Day:", background="#2f373e", foreground='#72C24C').grid(row=2, column=0, pady=5)
+        ttk.Label(input_frame, text="Rate (₱/kWh):", background="#2f373e", foreground='#72C24C').grid(row=3, column=0, pady=5)
 
         self.entry_name = tk.Entry(input_frame, width=25, background="#ADC2D1")
         self.entry_watts = tk.Entry(input_frame, background="#ADC2D1")
@@ -55,38 +56,37 @@ class EnergyCalculator:
         self.entry_hours.grid(row=2, column=1)
         self.entry_rate.grid(row=3, column=1)
 
-        tk.Button(input_frame, text="Choose Image (PNG only)", command=self.choose_image,
+        tk.Button(input_frame, text="Choose Image (PNG)", command=self.choose_image,
                   background="#ADC2D1", foreground="#356D1B").grid(row=4, column=0, columnspan=2, pady=8)
+
         tk.Button(input_frame, text="Add Appliance", command=self.add_appliance,
                   background="#ADC2D1", foreground="#356D1B").grid(row=5, column=0, columnspan=2, pady=10)
 
-        # Style for Treeview
+        # Treeview Style
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Treeview", background="#ADC2D1", fieldbackground="#ADC2D1", foreground="#000000")
+        style.configure("Treeview", background="#ADC2D1", fieldbackground="#ADC2D1",
+                        foreground="#000000", rowheight=70)
         style.configure("Treeview.Heading", background="#7B97AC", foreground="#FCDEFF")
-        style.map('Treeview', background=[('selected', "#3D6829")], foreground=[('selected', '#FFFFFF')])
 
-        # Wrapper frame to center the table
         table_frame = tk.Frame(root, background="#2f373e")
         table_frame.pack(pady=10)
 
-        # Treeview
+        # IMPORTANT FIX: Use #0 column for images
         self.tree = ttk.Treeview(
             table_frame,
             columns=("name", "watts", "hours", "rate", "daily", "monthly"),
             show="tree headings",
             height=12
         )
-
         self.tree.pack()
 
-        # Image column (#0)
+        # Image in #0 column
         self.tree.heading("#0", text="Image")
-        self.tree.column("#0", width=80, anchor='center')
+        self.tree.column("#0", width=90, anchor="center")
 
         # Other columns
-        self.tree.heading("name", text="Appliance Name")
+        self.tree.heading("name", text="Appliance")
         self.tree.heading("watts", text="Watts")
         self.tree.heading("hours", text="Hours/Day")
         self.tree.heading("rate", text="Rate (₱/kWh)")
@@ -100,24 +100,30 @@ class EnergyCalculator:
         self.tree.column("daily", width=140)
         self.tree.column("monthly", width=140)
 
-        # Delete button
+        # Delete Button
         tk.Button(root, text="Delete Selected", command=self.delete_selected,
                   background="#ADC2D1", foreground="#356D1B").pack(pady=6)
 
         # Totals
-        self.total_daily_label = ttk.Label(root, text="Total Daily Cost: ₱0.00", font=("Arial", 11, "bold"),
+        self.total_daily_label = ttk.Label(root, text="Total Daily Cost: ₱0.00",
+                                           font=("Arial", 11, "bold"),
                                            background="#2f373e", foreground='#FCDEFF')
-        self.total_monthly_label = ttk.Label(root, text="Total Monthly Cost: ₱0.00", font=("Arial", 11, "bold"),
+        self.total_monthly_label = ttk.Label(root, text="Total Monthly Cost: ₱0.00",
+                                             font=("Arial", 11, "bold"),
                                              background="#2f373e", foreground='#5FCCFA')
+
         self.total_daily_label.pack()
         self.total_monthly_label.pack()
 
+
+    # Choose Image
     def choose_image(self):
         path = filedialog.askopenfilename(filetypes=[("PNG Files", "*.png")])
         if path:
             self.selected_image_path = path
             messagebox.showinfo("Image Selected", f"Selected: {os.path.basename(path)}")
 
+    # Add Appliance
     def add_appliance(self):
         try:
             name = self.entry_name.get() or "Appliance"
@@ -129,19 +135,25 @@ class EnergyCalculator:
                 messagebox.showwarning("No Image", "Please choose a PNG image first.")
                 return
 
-            # Resize image manually using subsample
+            # Resize image using subsample
             photo = PhotoImage(file=self.selected_image_path)
             scale = max(1, int(max(photo.width(), photo.height()) / 60))
             photo = photo.subsample(scale, scale)
 
-            img_key = self.selected_image_path + str(len(self.tree.get_children()))
+            # KEEP reference or images disappear
             self.image_cache[id(photo)] = photo
 
             daily_cost = (watts / 1000) * hours * rate
             monthly_cost = daily_cost * 30
 
-            self.tree.insert("", END, text="", image=photo,
-                             values=(name, watts, hours, rate, f"{daily_cost:.2f}", f"{monthly_cost:.2f}"))
+            # Insert IMAGE in #0 column
+            self.tree.insert(
+                "",
+                END,
+                text="",  
+                image=photo,  
+                values=(name, watts, hours, rate, f"{daily_cost:.2f}", f"{monthly_cost:.2f}")
+            )
 
             self.update_totals()
 
@@ -154,15 +166,20 @@ class EnergyCalculator:
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter valid numbers.")
 
+    # Update totals
     def update_totals(self):
-        total_daily = total_monthly = 0
+        total_daily = 0
+        total_monthly = 0
+
         for item in self.tree.get_children():
             vals = self.tree.item(item, "values")
             total_daily += float(vals[4])
             total_monthly += float(vals[5])
+
         self.total_daily_label.config(text=f"Total Daily Cost: ₱{total_daily:.2f}")
         self.total_monthly_label.config(text=f"Total Monthly Cost: ₱{total_monthly:.2f}")
 
+    # Delete selection
     def delete_selected(self):
         sel = self.tree.selection()
         if not sel:
@@ -172,17 +189,22 @@ class EnergyCalculator:
             self.tree.delete(item)
         self.update_totals()
 
+    # Export CSV
     def export_csv(self):
         path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
         if not path:
             return
+
         rows = [self.tree.item(item, "values") for item in self.tree.get_children()]
+
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["Appliance", "Watts", "Hours/Day", "Rate", "Daily", "Monthly"])
             writer.writerows(rows)
+
         messagebox.showinfo("Exported", "CSV Export Successful!")
 
+    # Clear all
     def clear_all(self):
         if messagebox.askyesno("Confirm", "Clear all appliances?"):
             for item in self.tree.get_children():
