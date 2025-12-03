@@ -9,7 +9,8 @@ class EnergyCalculator:
         self.root = root
         self.root.title("Energy Cost Calculator")
 
-        self.root.geometry("1200x700")
+        # Bigger window so there's space under the table
+        self.root.geometry("1300x750")
         self.root.config(background="#2f373e")
         self.root.resizable(False, False)
 
@@ -24,7 +25,6 @@ class EnergyCalculator:
         file_menu.add_command(label="Delete Selected", command=self.delete_selected)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
-
         menubar.add_cascade(label="File", menu=file_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0, background="#ADC2D1")
@@ -69,23 +69,28 @@ class EnergyCalculator:
                         foreground="#000000", rowheight=70)
         style.configure("Treeview.Heading", background="#7B97AC", foreground="#FCDEFF")
 
-        table_frame = tk.Frame(root, background="#2f373e")
-        table_frame.pack(pady=10)
+        # TABLE FRAME – centered with bottom margin
+        main_table_container = tk.Frame(root, background="#2f373e")
+        main_table_container.pack(pady=(20, 40))   # <-- Adds SPACE at bottom
 
-        # IMPORTANT FIX: Use #0 column for images
+        # Inner frame to keep table centered
+        table_frame = tk.Frame(main_table_container, background="#2f373e")
+        table_frame.pack(anchor="center")
+
+        # Treeview
         self.tree = ttk.Treeview(
             table_frame,
             columns=("name", "watts", "hours", "rate", "daily", "monthly"),
             show="tree headings",
-            height=12
+            height=10
         )
         self.tree.pack()
 
-        # Image in #0 column
+        # Image column
         self.tree.heading("#0", text="Image")
         self.tree.column("#0", width=90, anchor="center")
 
-        # Other columns
+        # Data columns
         self.tree.heading("name", text="Appliance")
         self.tree.heading("watts", text="Watts")
         self.tree.heading("hours", text="Hours/Day")
@@ -135,23 +140,21 @@ class EnergyCalculator:
                 messagebox.showwarning("No Image", "Please choose a PNG image first.")
                 return
 
-            # Resize image using subsample
             photo = PhotoImage(file=self.selected_image_path)
+
             scale = max(1, int(max(photo.width(), photo.height()) / 60))
             photo = photo.subsample(scale, scale)
 
-            # KEEP reference or images disappear
             self.image_cache[id(photo)] = photo
 
             daily_cost = (watts / 1000) * hours * rate
             monthly_cost = daily_cost * 30
 
-            # Insert IMAGE in #0 column
             self.tree.insert(
                 "",
                 END,
-                text="",  
-                image=photo,  
+                text="",
+                image=photo,
                 values=(name, watts, hours, rate, f"{daily_cost:.2f}", f"{monthly_cost:.2f}")
             )
 
@@ -166,7 +169,6 @@ class EnergyCalculator:
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter valid numbers.")
 
-    # Update totals
     def update_totals(self):
         total_daily = 0
         total_monthly = 0
@@ -179,7 +181,6 @@ class EnergyCalculator:
         self.total_daily_label.config(text=f"Total Daily Cost: ₱{total_daily:.2f}")
         self.total_monthly_label.config(text=f"Total Monthly Cost: ₱{total_monthly:.2f}")
 
-    # Delete selection
     def delete_selected(self):
         sel = self.tree.selection()
         if not sel:
@@ -189,7 +190,6 @@ class EnergyCalculator:
             self.tree.delete(item)
         self.update_totals()
 
-    # Export CSV
     def export_csv(self):
         path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
         if not path:
@@ -204,7 +204,6 @@ class EnergyCalculator:
 
         messagebox.showinfo("Exported", "CSV Export Successful!")
 
-    # Clear all
     def clear_all(self):
         if messagebox.askyesno("Confirm", "Clear all appliances?"):
             for item in self.tree.get_children():
