@@ -9,15 +9,15 @@ class EnergyCalculator:
         self.root = root
         self.root.title("Energy Cost Calculator")
 
-        # Bigger window so there's space under the table
-        self.root.geometry("1300x750")
+        # Set a reasonable fixed size for all content
+        self.root.geometry("1300x785") # Reduced width, adjusted height
         self.root.config(background="#2f373e")
         self.root.resizable(False, False)
 
         self.image_cache = {}
         self.selected_image_path = None
 
-        # Menu Bar
+        # Menu Bar setup remains the same
         menubar = tk.Menu(self.root)
         file_menu = tk.Menu(menubar, tearoff=0, background="#ADC2D1")
         file_menu.add_command(label="Export CSV", command=self.export_csv)
@@ -37,14 +37,14 @@ class EnergyCalculator:
         tk.Label(root, text="ENERGY COST CALCULATOR", font=("Arial", 16, "bold"),
                  background="#2f373e", foreground='#72C24C').pack(pady=10)
 
-        # Input Frame
+        # --- Top Section: Input Frame ---
         input_frame = tk.Frame(root, background="#2f373e")
         input_frame.pack(pady=5)
 
-        ttk.Label(input_frame, text="Appliance Name:", background="#2f373e", foreground='#72C24C').grid(row=0, column=0, pady=5)
-        ttk.Label(input_frame, text="Power (Watts):", background="#2f373e", foreground='#72C24C').grid(row=1, column=0, pady=5)
-        ttk.Label(input_frame, text="Hours/Day:", background="#2f373e", foreground='#72C24C').grid(row=2, column=0, pady=5)
-        ttk.Label(input_frame, text="Rate (₱/kWh):", background="#2f373e", foreground='#72C24C').grid(row=3, column=0, pady=5)
+        ttk.Label(input_frame, text="Appliance Name:", background="#2f373e", foreground='#72C24C').grid(row=0, column=0, pady=5, sticky='e')
+        ttk.Label(input_frame, text="Power (Watts):", background="#2f373e", foreground='#72C24C').grid(row=1, column=0, pady=5, sticky='e')
+        ttk.Label(input_frame, text="Hours/Day:", background="#2f373e", foreground='#72C24C').grid(row=2, column=0, pady=5, sticky='e')
+        ttk.Label(input_frame, text="Rate (₱/kWh):", background="#2f373e", foreground='#72C24C').grid(row=3, column=0, pady=5, sticky='e')
 
         self.entry_name = tk.Entry(input_frame, width=25, background="#ADC2D1")
         self.entry_watts = tk.Entry(input_frame, background="#ADC2D1")
@@ -62,27 +62,27 @@ class EnergyCalculator:
         tk.Button(input_frame, text="Add Appliance", command=self.add_appliance,
                   background="#ADC2D1", foreground="#356D1B").grid(row=5, column=0, columnspan=2, pady=10)
 
-        # Treeview Style
+        # Treeview Style setup remains the same
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("Treeview", background="#ADC2D1", fieldbackground="#ADC2D1",
                         foreground="#000000", rowheight=70)
         style.configure("Treeview.Heading", background="#7B97AC", foreground="#FCDEFF")
 
-        # TABLE FRAME – centered with bottom margin
+        # --- Middle Section: Table ---
         main_table_container = tk.Frame(root, background="#2f373e")
-        main_table_container.pack(pady=(20, 40))   # <-- Adds SPACE at bottom
+        main_table_container.pack(pady=(10, 5), fill='x')
 
-        # Inner frame to keep table centered
         table_frame = tk.Frame(main_table_container, background="#2f373e")
         table_frame.pack(anchor="center")
 
-        # Treeview
+        # Treeview - Height fixed at 5 rows to ensure it fits and allows bottom elements to show
+        # Original height was 10 which was too tall for the default window
         self.tree = ttk.Treeview(
             table_frame,
             columns=("name", "watts", "hours", "rate", "daily", "monthly"),
             show="tree headings",
-            height=10
+            height=5 
         )
         self.tree.pack()
 
@@ -104,16 +104,23 @@ class EnergyCalculator:
         self.tree.column("rate", width=120)
         self.tree.column("daily", width=140)
         self.tree.column("monthly", width=140)
-
-        # Delete Button
-        tk.Button(root, text="Delete Selected", command=self.delete_selected,
+        
+        # --- Bottom Section: Button and Totals ---
+        
+        # New frame to ensure the bottom elements are grouped and placed at the bottom
+        # This structure is necessary when using .pack() on the root window
+        bottom_frame = tk.Frame(root, background="#2f373e")
+        bottom_frame.pack(side="bottom", fill="x", pady=(5, 15)) 
+        
+        # Delete Button - Centered in the bottom frame
+        tk.Button(bottom_frame, text="Delete Selected", command=self.delete_selected,
                   background="#ADC2D1", foreground="#356D1B").pack(pady=6)
 
-        # Totals
-        self.total_daily_label = ttk.Label(root, text="Total Daily Cost: ₱0.00",
+        # Totals - Centered below the button
+        self.total_daily_label = ttk.Label(bottom_frame, text="Total Daily Cost: ₱0.00",
                                            font=("Arial", 11, "bold"),
                                            background="#2f373e", foreground='#FCDEFF')
-        self.total_monthly_label = ttk.Label(root, text="Total Monthly Cost: ₱0.00",
+        self.total_monthly_label = ttk.Label(bottom_frame, text="Total Monthly Cost: ₱0.00",
                                              font=("Arial", 11, "bold"),
                                              background="#2f373e", foreground='#5FCCFA')
 
@@ -175,8 +182,12 @@ class EnergyCalculator:
 
         for item in self.tree.get_children():
             vals = self.tree.item(item, "values")
-            total_daily += float(vals[4])
-            total_monthly += float(vals[5])
+            try:
+                # vals[4] and vals[5] are strings formatted as 'X.XX'
+                total_daily += float(vals[4])
+                total_monthly += float(vals[5])
+            except ValueError:
+                pass
 
         self.total_daily_label.config(text=f"Total Daily Cost: ₱{total_daily:.2f}")
         self.total_monthly_label.config(text=f"Total Monthly Cost: ₱{total_monthly:.2f}")
